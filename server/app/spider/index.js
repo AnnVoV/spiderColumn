@@ -2,6 +2,7 @@ const request = require('request-promise-native');
 const cheerio = require('cheerio');
 const https = require('https');
 const mongoose = require('mongoose');
+const url = require('url');
 const config = require('../config');
 
 const ImageModel = require('../model/columnImage');
@@ -22,7 +23,7 @@ const connectMongoDB = () => {
     .catch((err) => {
         console.log(err);
     });
-}
+};
 
 /**
  * 获取知乎专栏相关的数据
@@ -101,17 +102,21 @@ const getPageSize = () => {
  * @param url
  * @returns {Promise<any>}
  */
-const saveImageToLocal = (url) => {
-    const checkIsSaved = async (url) => {
-        const data = await ImageModel.find({key: url}).exec();
+const saveImageToLocal = (imageUrl) => {
+    const checkIsSaved = async (imageUrl) => {
+        const data = await ImageModel.find({key: imageUrl}).exec();
         return !!data;
     };
 
     return new Promise((resolve, reject) => {
         try {
-            if (!url || checkIsSaved(url)) resolve('');
+            if (!imageUrl || checkIsSaved(imageUrl)) resolve('');
             let data = '';
-            https.get(url, (res) => {
+            const config = url.parse(imageUrl);
+            https.get({
+                ...config,
+                family: 4,
+            }, (res) => {
                 data = `data: ${res.headers['content-type']};base64,`;
                 res.setEncoding('base64');
                 res.on('data', (chunk) => {
@@ -119,14 +124,14 @@ const saveImageToLocal = (url) => {
                 });
                 res.on('end', () => {
                     ImageModel.create({
-                        key: url,
+                        key: imageUrl,
                         value: data,
                     }, (err, res) => {
                         resolve(res);
                     });
                 });
             });
-        }catch(err) {
+        } catch (err) {
             console.log(err);
         }
 
