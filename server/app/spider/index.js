@@ -108,23 +108,28 @@ const saveImageToLocal = (url) => {
     };
 
     return new Promise((resolve, reject) => {
-        if (!url || checkIsSaved(url)) resolve('');
-        let data = '';
-        https.get(url, (res) => {
-            data = `data: ${res.headers['content-type']};base64,`;
-            res.setEncoding('base64');
-            res.on('data', (chunk) => {
-                data += chunk;
-            });
-            res.on('end', () => {
-                ImageModel.create({
-                    key: url,
-                    value: data,
-                }, (err, res) => {
-                    resolve(res);
+        try {
+            if (!url || checkIsSaved(url)) resolve('');
+            let data = '';
+            https.get(url, (res) => {
+                data = `data: ${res.headers['content-type']};base64,`;
+                res.setEncoding('base64');
+                res.on('data', (chunk) => {
+                    data += chunk;
+                });
+                res.on('end', () => {
+                    ImageModel.create({
+                        key: url,
+                        value: data,
+                    }, (err, res) => {
+                        resolve(res);
+                    });
                 });
             });
-        });
+        }catch(err) {
+            console.log(err);
+        }
+
     });
 };
 
