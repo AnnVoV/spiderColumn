@@ -2,7 +2,7 @@ const request = require('request-promise-native');
 const cheerio = require('cheerio');
 const https = require('https');
 const mongoose = require('mongoose');
-const url = require('url');
+const urlModule = require('url');
 const config = require('../config');
 
 const ImageModel = require('../model/columnImage');
@@ -112,7 +112,7 @@ const saveImageToLocal = (imageUrl) => {
         try {
             if (!imageUrl || checkIsSaved(imageUrl)) resolve('');
             let data = '';
-            const config = url.parse(imageUrl);
+            const config = urlModule.parse(imageUrl);
             https.get({
                 ...config,
                 family: 4,
