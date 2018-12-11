@@ -1,16 +1,24 @@
-var http = require('http'), httpProxy = require('http-proxy');
-//
-// Create your proxy server and set the target in the options.
-//
-httpProxy.createProxyServer({
-  target:'http://localhost:9000'
-}).listen(8000); // See (†)
+function getConstant() {
+  return 1;
+}
 
-//
-// Create your target server
-//
-http.createServer(function (req, res) {
-  res.writeHead(200, { 'C ontent-Type': 'text/plain' });
-  res.write('request successfully proxied!' + '\n' + JSON.stringify(req.headers, true, 2));
-  res.end();
-}).listen(9000);
+async function getAsyncConstant() {
+  return 1;
+}
+
+async function getPromise() {
+  return new Promise((resolved, rejected) => {
+    resolved(1);
+  });
+}
+
+async function test() {
+  var a = 2;
+  var c = 1;
+  await getConstant();
+  var d = 3;
+  await getPromise();
+  var d = 4;
+  await getAsyncConstant();
+  return 2;
+}

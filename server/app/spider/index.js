@@ -1,11 +1,11 @@
 const request = require('request-promise-native');
 const cheerio = require('cheerio');
-const https = require('https');
+const fs = require('fs');
 const mongoose = require('mongoose');
 const urlModule = require('url');
-const config = require('../config');
+const path = require('path');
 
-const ImageModel = require('../model/columnImage');
+const config = require('../config');
 const ColumnModel = require('../model/column');
 const ContentModel = require('../model/content');
 
@@ -42,8 +42,8 @@ const exploreColumns = async (offset, limit) => {
     const rsData = await request(options);
     const promiseArr = rsData.data.map(async (column) => {
         return ColumnModel
-        .findOneAndUpdate({id: column.id}, column, {upsert: true, new: true})
-        .exec();
+                        .findOneAndUpdate({id: column.id}, column, {upsert: true, new: true})
+                        .exec();
         // 存储专栏相关的数据 这里涉及到findOneAndUpdate 与 update 方法的区别
         // https://segmentfault.com/a/1190000009706886,
         // Mongoose: findOneAndUpdate doesn't return updated document
@@ -103,39 +103,23 @@ const getPageSize = () => {
  * @returns {Promise<any>}
  */
 const saveImageToLocal = (imageUrl) => {
-    const checkIsSaved = async (imageUrl) => {
-        const data = await ImageModel.find({key: imageUrl}).exec();
-        return !!data;
-    };
-
+    if (!imageUrl) return;
     return new Promise((resolve, reject) => {
-        try {
-            if (!imageUrl || checkIsSaved(imageUrl)) resolve('');
-            let data = '';
-            const config = urlModule.parse(imageUrl);
-            https.get({
-                ...config,
-                family: 4,
-            }, (res) => {
-                data = `data: ${res.headers['content-type']};base64,`;
-                res.setEncoding('base64');
-                res.on('data', (chunk) => {
-                    data += chunk;
-                });
-                res.on('end', () => {
-                    ImageModel.create({
-                        key: imageUrl,
-                        value: data,
-                    }, (err, res) => {
-                        resolve(res);
-                    });
-                });
-            });
-        } catch (err) {
-            console.log(err);
-        }
-
-    });
+        const pathName = urlModule.parse(imageUrl).pathname;
+        const destPath = path.join(__dirname, `../dist/assets${pathName}`);
+        const opt = {
+            uri: imageUrl,
+            family: 4,
+            headers: {
+                'Origin': 'https://www.zhihu.com',
+                'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_6) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36'
+            },
+        };
+        const reader = request(opt);
+        reader.pipe(fs.createWriteStream(destPath));
+        reader.on('end', () => resolve(destPath));
+        reader.on('err', (err) => console.log(err));
+    }).catch((err) => {console.log(err)});
 };
 
 /**
@@ -146,14 +130,30 @@ const saveImageToLocal = (imageUrl) => {
  */
 const saveArticles = (articleArr, column) => {
     const promiseArr = articleArr.map(async (article) => {
-        await saveImageToLocal(column.image_url);
+        await saveImageToLocal(column.image_url) // 保存专栏的图片
+        await saveImageToLocal(article.image_url) // 保存内容的图片
+        await saveImageToLocal(article.author.avatar_url) // 保存作者的图片
+
         article.columnId = column._id;
+        article.ifNew = checkIsNewArticle(article);
         ContentModel
-        .updateOne({id: article.id}, article, {upsert: true})
-        .exec();
+                    .updateOne({id: article.id}, article, {upsert: true})
+                    .exec();
     });
     return Promise.all(promiseArr);
 };
+
+const checkIsNewArticle = (article) => {
+    const date = new Date(article.updated * 1000);
+    const month = date.getMonth();
+    const year = new Date(date).getFullYear();
+    const now = new Date();
+
+    if (now.getFullYear() > year) {
+        return false;
+    }
+    return now.getMonth() === month;
+}
 
 const init = async () => {
     const allNum = await getPageSize();
@@ -165,6 +165,7 @@ const init = async () => {
         const startPage = cur * pageSize;
         const endPage = cur * pageSize + pageSize;
         const columns = await exploreColumns(startPage, endPage);
+
         const articleArrs = columns.map(async (column) => {
             const articleArr = await getArticledData(column);
             return saveArticles(articleArr, column);
@@ -181,5 +182,5 @@ const init = async () => {
     });
 };
 
-// init();
-module.exports = init;
+init();
+// module.exports = init;

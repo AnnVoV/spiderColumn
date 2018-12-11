@@ -30,6 +30,8 @@ const ContentSchema = new Schema({
         type: String,
         ref: 'Column', // 指向专栏(你指向的数据库表名字)
     }
+}, {
+    strict: false
 })
 
 module.exports = mongoose.model('Content',ContentSchema)

@@ -11,9 +11,9 @@ mongoose.connect(url, {useNewUrlParser: true});
 
 const app = new Koa();
 
-if (process.env.NODE_ENV === 'prod') {
+// if (process.env.NODE_ENV === 'prod') {
     app.use(Static(__dirname + '/dist'));
-}
+// }
 
 app
 .use(router.routes())

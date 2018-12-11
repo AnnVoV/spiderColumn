@@ -8,6 +8,7 @@
 <script>
   import 'element-ui/lib/theme-chalk/index.css';
   import topNav from './components/navigator/index';
+  import '@/assets/styles/reset.css';
 
   export default {
     name: 'App',
@@ -24,6 +25,5 @@
     -moz-osx-font-smoothing: grayscale;
     text-align: center;
     color: #2c3e50;
-    margin-top: 60px;
   }
 </style>

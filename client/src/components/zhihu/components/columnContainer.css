@@ -1,0 +1,88 @@
+.u-column-logo {
+  width: 100px; height: 100px;
+  border-radius: 50%;
+}
+
+.u-column-title {
+  font-size: 18px;
+}
+
+.u-column-name {
+  color: #8590a6;
+}
+
+.u-content {
+  position: relative;
+  display: flex; align-items: center;
+}
+
+.u-content p {
+  margin-left: 10px; line-height: 1.6;
+  color: #444; font-size: 15px;
+}
+
+.u-fire {
+  position: absolute; right: 40px; top: -70px;
+  display: inline-block; width: 20px; height: 30px;
+  background: url('https://haitao.nos.netease.com/b88fef13-030e-44a5-8ab5-c66922e46395_45_53.png') no-repeat; background-size: 100% auto;
+}
+
+.u-fire:after {
+  content: 'New'; display: inline-block;
+  margin-left: 25px;
+  color: #a10b0b; font-weight: bold; font-size: 14px;
+}
+
+.u-content p:after {
+  content: '阅读全文>'; display: inline-block;
+  color: #175199; font-size: 14px;
+}
+
+.u-content__logo {
+  display: block; flex-shrink: 0;
+  width: 260px;
+}
+
+.u-content__logo img {
+  width: 100%;
+  border-radius: 4px;
+}
+
+.m-article {
+  padding: 10px;
+  text-align: left; border-bottom: 1px solid #f6f6f6;
+  cursor: pointer;
+}
+
+.m-article__title {
+  color: #000; font-size: 18px;
+}
+
+.m-article__subtitle {
+  color:#999; font-size: 15px; font-weight: normal;
+}
+
+.m-article__author {
+  margin: 5px 10px 10px;
+  width: 30px; height: 30px;
+  border-radius: 50%;
+}
+
+.m-article__create {
+  position: absolute; right: 10px;
+}
+
+.m-article__row {
+  position: relative; display: flex;
+  align-items: center;
+}
+
+.m-column {
+  width: 690px; margin: 40px auto; padding: 15px;
+  background: #fff; box-shadow: 0 1px 3px 0 rgba(26,26,26,.1);
+}
+
+.m-column:before {
+  content: ''; display: block;
+  background: #ddd;
+}

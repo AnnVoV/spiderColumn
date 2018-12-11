@@ -1,4 +1,4 @@
-const http = require('http');
+const url = require('url');
 const ColumnModel = require('../model/column');
 const ImageModel = require('../model/columnImage');
 const ContentModel = require('../model/content');
@@ -20,35 +20,37 @@ module.exports = {
         const query = ColumnModel
                                 .find({})
                                 .limit(pageSize)
-                                .skip(skipNum)
+                                .skip(skipNum);
         return query.exec();
     },
     getArticle(column) {
         const query = ContentModel
-                                .find({columnId: column._id,})
-                                .limit(COLUMN_LIMIT_COUNT);
+                                .find({columnId: column._id})
+                                .limit(COLUMN_LIMIT_COUNT)
+                                .sort({updated: -1});
         return query.exec();
     },
     async getColumnImage(key) {
         const imageUrl = await ImageModel
-                        .find({key})
-                        .exec();
+                                        .find({key})
+                                        .exec();
         return imageUrl;
     },
     async getArticleAndColumn(columnArr) {
         // 拼接专栏内容，专栏的content 增加3篇专栏文章
         const promiseArr = columnArr.map(async (column) => {
             let contentArr = await this.getArticle(column);
-            let base64Img = await this.getColumnImage(column.image_url);
-            contentArr = this.wrapContent(contentArr);
+            contentArr = await this.wrapContent(contentArr);
+            const contentUpdateTime = this.getClosestUpdateTime(contentArr);
 
             // 【注】https://segmentfault.com/a/1190000011403756
             // 如果不加这个会把其他属性也打印出来
             column = column.toJSON({getters: true});
             return {
-                ...column,
-                base64Img,
+                base64Img: url.parse(column.image_url).pathname,
                 contentArr,
+                contentUpdateTime,
+                ...column,
             };
         });
         return await Promise.all(promiseArr);
@@ -61,11 +63,18 @@ module.exports = {
         return (Date.now() - timeStamp) < 20 * DAY * 1000;
     },
     wrapContent(contentArr) {
-        const res = contentArr.map((content) => {
+        const res = contentArr.map(async (content) => {
             content = content.toJSON({getters: true});
             content.isNew = this.judgeIsNew(content);
+            content.authorImg = url.parse(content.author.avatar_url).pathname; // 作者头像
+            content.contentImg = url.parse(content.image_url).pathname; // 文章内容图像
             return content;
         });
-        return res;
+
+        return Promise.all(res);
+    },
+    getClosestUpdateTime(contentArr) {
+        contentArr.sort((a, b) => -(a.updated - b.updated)); // 将内容数组按照updated时间降序排列
+        return contentArr[0].updated; // 获取最近更新的一篇内容的时间
     }
 };
